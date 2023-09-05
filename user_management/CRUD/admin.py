@@ -84,6 +84,39 @@ class ClientAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
 
 
+class AppAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'id',
+        'app_name'
+    )
+
+
+class PlanAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'id',
+        'plan_name',
+        'max_number_members',
+        'cloud_storage'
+    )
+
+
+class CompanyAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'id',
+        'company_name',
+        'owner',
+        'plan',
+        'created_date',
+    )
+    list_filter = (
+        'owner',
+    )
+    raw_id_fields = ('owner',)
+
+
 def register_models(admin_class_list):
     for model, admin_class in admin_class_list:
         admin.site.register(model, admin_class)
@@ -95,4 +128,7 @@ register_models([
     (models.User, UserAdmin),
     (models.Employee, EmployeeAdmin),
     (models.Client, ClientAdmin),
+    (models.App, AppAdmin),
+    (models.Plan, PlanAdmin),
+    (models.Company, CompanyAdmin),
 ])

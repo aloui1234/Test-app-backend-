@@ -39,7 +39,7 @@ class User(AbstractBaseUser):
   username = models.CharField(max_length=30, default='')
   first_name = models.CharField(max_length=30, blank=True)
   last_name = models.CharField(max_length=50, blank=True)
-  date_of_birth = models.DateTimeField(default=timezone.now)
+  #date_of_birth = models.DateTimeField(default=timezone.now)
   backup_email = models.EmailField(blank=True)
   phone_number = models.CharField(max_length=20, blank=True)
   date_joined = models.DateTimeField(auto_now_add=True)
@@ -78,6 +78,7 @@ class Employee(models.Model):
     """
   user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee')
   role = models.ForeignKey(Role, on_delete=models.SET_NULL, related_name='user_role', null=True)
+  job_title = models.CharField(max_length=100, default='')
   
   class Meta:
         verbose_name = 'employee'
@@ -95,8 +96,41 @@ class Client(models.Model):
         verbose_name_plural = 'clients'
 
 
-
-
-
-
+class Candidate(models.Model):
+  """
+    User subtype with specific fields and properties
+    """
+  user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='candidate')
   
+  class Meta:
+        verbose_name = 'candidate'
+        verbose_name_plural = 'candidates'
+
+
+class App(models.Model):
+  app_name = models.CharField(max_length=50, unique=True)
+
+  def __str__(self):
+      return self.app_name
+
+
+class Plan(models.Model):
+  plan_name = models.CharField(max_length=50, unique=True)
+  max_number_members = models.IntegerField()
+  cloud_storage = models.IntegerField()
+  apps = models.ManyToManyField(App, related_name='related_apps')
+
+  def __str__(self):
+      return self.plan_name
+  
+
+class Company(models.Model):
+  company_name = models.CharField(max_length=50, unique=True)
+  owner = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='owner')
+  plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name='owner')
+  employees = models.ManyToManyField(Employee, related_name='employees')
+  clients = models.ManyToManyField(Client, related_name='clients')
+  created_date = models.DateTimeField(default=timezone.now)
+
+  def __str__(self):
+        return self.company_name
