@@ -9,4 +9,8 @@ urlpatterns = [
      # Add URL patterns for GetEmployeeView and GetClientView
     path('get-employee/', views.GetEmployeeView.as_view(), name='get-employee'),
     path('get-client/', views.GetClientView.as_view(), name='get-client'),
-    ]
+    
+    path('employees/<int:id>/', views.EmployeeUpdateByHR, name='employee-update'),
+    path('clients/<int:id>/', views.ClientUpdateView, name='client-update'),
+    path('employees/<int:id>/profile/', views.EmployeeUpdateBySelf, name='employee-update'),
+    ] 

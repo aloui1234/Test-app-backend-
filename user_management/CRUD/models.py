@@ -4,6 +4,7 @@ import uuid
 from django.db import models
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 from .managers import CustomUserManager
 
@@ -52,7 +53,7 @@ class User(AbstractBaseUser):
   modified_date = models.DateTimeField(auto_now=True)
   created_by = models.EmailField(default='system')
   modified_by = models.EmailField(default='system')
-
+  
   USERNAME_FIELD = 'email'
   REQUIRED_FIELDS = []
 
@@ -70,8 +71,36 @@ class User(AbstractBaseUser):
   class Meta:
         verbose_name = 'user'
         verbose_name_plural = 'users'
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    job_title = models.CharField(max_length=100)
+    # Add other fields as needed
 
+    def __str__(self):
+        return self.name
+class ProfileModification(models.Model):
+        user = models.ForeignKey(
+          get_user_model(),
+          on_delete=models.CASCADE,
+          related_name='profile_modifications',
+          verbose_name='User'
+    )
+        modified_by = models.ForeignKey(
+          Role,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='profile_modifications_created',
+        verbose_name='Modified By'
+    )
+        modified_date = models.DateTimeField(default=timezone.now, verbose_name='Modification Date',null=True)
+        modified_data = models.JSONField(default=dict, verbose_name='Modified Data',null=True)
 
+        class Meta:
+          verbose_name = 'profile modification'
+          verbose_name_plural = 'profile modifications'
+   
 class Employee(models.Model):
   """
     User subtype with specific fields and properties
@@ -79,18 +108,17 @@ class Employee(models.Model):
   user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee')
   role = models.ForeignKey(Role, on_delete=models.SET_NULL, related_name='user_role', null=True)
   job_title = models.CharField(max_length=100, default='')
-  
-  class Meta:
-        verbose_name = 'employee'
-        verbose_name_plural = 'employees'
-
+  #Archive
+  profilemodification = models.ManyToManyField(ProfileModification, related_name='employeemodification',null=True)
 
 class Client(models.Model):
   """
     User subtype with specific fields and properties
     """
   user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='client')
-  
+
+  profilemodification = models.ManyToManyField(ProfileModification, related_name='clientmodification',null=True)
+
   class Meta:
         verbose_name = 'client'
         verbose_name_plural = 'clients'
@@ -134,3 +162,5 @@ class Company(models.Model):
 
   def __str__(self):
         return self.company_name
+  
+
