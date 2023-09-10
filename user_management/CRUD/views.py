@@ -9,9 +9,9 @@ from .serializers import ProfileSerializer  # Import your serializer
 from django.shortcuts import get_object_or_404, render
 from .models import Employee, ProfileModification,Profile
 from .serializers import EmployeeSerializer
-from .models import Employee, Client  # Import your Employee and Client models
-from .serializers import EmployeeSerializer, ClientSerializer  # Import your serializers
-from .models import User
+from .models import Employee, Client   # Import your Employee and Client models
+from .serializers import EmployeeSerializer, ClientSerializer, ProfileSerializer, UserSerializer  # Import your serializers
+from .models import User, Company, Profile
 from django.utils import timezone
 
 from rest_framework.decorators import api_view
@@ -102,6 +102,116 @@ class GetClientView(APIView):
         except Client.DoesNotExist:
 
             return Response('User not found', status= status.HTTP_404_NOT_FOUND)
+       
+class CreateEmployeeAPIView(APIView):
+    employee_serializer_class = EmployeeSerializer
+    profile_serializer_class = ProfileSerializer
+
+    permission_classes = (AllowAny,)
+    
+    def post(self, request, companyName):
+        try:
+            company_instance = Company.objects.filter(company_name = companyName).values()
+            print(company_instance)
+        except Company.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        employee_serializer = self.employee_serializer_class(data=request.data['employee'], context={'companyName': companyName})
+        profile_serializer = self.profile_serializer_class(data=request.data['employee']['profile'])
+       
+        employee_valid = employee_serializer.is_valid(raise_exception=True)
+        profile_valid = profile_serializer.is_valid(raise_exception=True)
+    
+        if employee_valid and profile_valid:  
+            employee_instance = employee_serializer.save()
+            print('employee_instance', employee_instance)
+            profile_serializer.save(employee=employee_instance)
+           
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success': True,
+                'statusCode': status_code,
+                'message': 'employee successfully created!',
+                'employee': EmployeeSerializer(employee_instance).data,
+            }
+            return Response(response, status=status_code)
+        return Response(employee_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    """
+    user_serializer_class = UserSerializer
+    profile_serializer_class = ProfileSerializer
+
+    permission_classes = (AllowAny,)
+    
+    def post(self, request):
+        user_serializer = self.user_serializer_class(data=request.data['employee']['user'])
+        profile_serializer = self.profile_serializer_class(data=request.data['employee']['profile'])
+       
+        user_valid = user_serializer.is_valid(raise_exception=True)
+        profile_valid = profile_serializer.is_valid(raise_exception=True)
+    
+        if user_valid and profile_valid:  
+            user_instance = user_serializer.save()
+            print('user_instance', user_instance)
+            profile_serializer.save(employee=user_instance)
+           
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success': True,
+                'statusCode': status_code,
+                'message': 'employee successfully created!',
+                'employee': EmployeeSerializer(user_instance).data,
+            }
+            return Response(response, status=status_code)
+        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        """
+class CreateClientAPIView(APIView):
+    client_serializer_class = ClientSerializer
+    permission_classes = (AllowAny,)
+    
+    def post(self, request, companyName):
+        try:
+            company_instance = Company.objects.filter(company_name = companyName).values()
+            print(company_instance)
+        except Company.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        client_serializer = self.client_serializer_class(data=request.data['client'], context={'companyName': companyName})
+        client_valid = client_serializer.is_valid(raise_exception=True)
+    
+        if client_valid:  
+            client_instance = client_serializer.save()
+            print('client_instance', client_instance)
+           
+            status_code = status.HTTP_201_CREATED
+            response = {
+                'success': True,
+                'statusCode': status_code,
+                'message': 'client successfully created!',
+                'client': ClientSerializer(client_instance).data,
+            }
+            return Response(response, status=status_code)
+        return Response(client_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+class DeleteEmployeeAPIView(APIView):
+    def delete(self, request, id):
+        try:
+            employee = Employee.objects.get(pk=id)
+            employee.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Employee.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+class DeleteClientAPIView(APIView):
+    def delete(self, request, id):
+        try:
+            client = Client.objects.get(pk=id)
+            client.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Client.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
         
 @api_view(["PUT"])
 #@permission_classes([IsAuthenticated])

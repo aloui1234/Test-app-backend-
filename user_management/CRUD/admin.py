@@ -27,6 +27,11 @@ class RoleAdmin(admin.ModelAdmin):
         'role_name',
     )
 
+class ProfileAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'job_title',
+    )
 
 class UserAdmin(admin.ModelAdmin):
 
@@ -38,8 +43,6 @@ class UserAdmin(admin.ModelAdmin):
         'username',
         'email',
         'username',
-        'first_name',
-        'last_name',
         'date_joined',
         'is_active',
         'is_recognized',
@@ -53,9 +56,7 @@ class UserAdmin(admin.ModelAdmin):
     )
     list_filter = (
         'email',
-        'username',
-        'first_name',
-        'last_name', 
+        'username', 
         'is_superuser'       
     )
     
@@ -107,14 +108,15 @@ class CompanyAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'company_name',
-        'owner',
+        #'owner',
         'plan',
         'created_date',
     )
     list_filter = (
-        'owner',
+        #'owner',
+        'company_name',
     )
-    raw_id_fields = ('owner',)
+    #raw_id_fields = ('owner',)
 
 
 def register_models(admin_class_list):
@@ -125,6 +127,7 @@ register_models([
     (models.Permission, PermissionAdmin),
     (models.PermissionGroup, PermissionGroupAdmin),
     (models.Role, RoleAdmin),
+    (models.Profile, ProfileAdmin),
     (models.User, UserAdmin),
     (models.Employee, EmployeeAdmin),
     (models.Client, ClientAdmin),
