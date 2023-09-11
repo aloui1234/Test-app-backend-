@@ -4,15 +4,14 @@ from . import views
 
 urlpatterns = [
     path('', views.api_root, name='api-root'),
-    path('employees/', views.GetEmployeeListView.as_view(), name='employee-list'),
-    path('clients/', views.GetClientListView.as_view(), name='client-list'),
-     # Add URL patterns for GetEmployeeView and GetClientView
-    path('get-employee/', views.GetEmployeeView.as_view(), name='get-employee'),
-    path('get-client/', views.GetClientView.as_view(), name='get-client'),
+    path('employees/<str:company>', views.GetEmployeeListView.as_view(), name='employee-list'), # <company> is the name of the company
+    path('clients/<str:company>', views.GetClientListView.as_view(), name='client-list'),
+    path('get-employee/<int:id>/', views.GetEmployeeView.as_view(), name='get-employee'), # <id> is the id of employee
+    path('get-client/<int:id>/', views.GetClientView.as_view(), name='get-client'), # <id> is the id of client
     
-    path('employees/<int:id>/', views.EmployeeUpdateByHR, name='employee-update'),
-    path('clients/<int:id>/', views.ClientUpdateView, name='client-update'),
-    path('employees/<int:id>/profile/', views.EmployeeUpdateBySelf, name='employee-update'),
+    path('update-employee/<int:id>/', views.EmployeeUpdateByHR, name='employee-update'),
+    path('update-client/<int:id>/', views.ClientUpdateView, name='client-update'),
+    path('update-employee/<int:id>/profile/', views.EmployeeProfile, name='employee-profile-update'),
     
     path('create-employee/<str:companyName>', views.CreateEmployeeAPIView.as_view(), name='create_employee'),
     path('delete-employee/<int:id>', views.DeleteEmployeeAPIView.as_view(), name='delete_employee'),

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Employee, Client,User, Role, Permission, Plan, Profile, Company, ProfileModification
 
+
 class RoleSerializer(serializers.ModelSerializer):
     permissions = serializers.PrimaryKeyRelatedField(queryset=Permission.objects.all(), many=True)
 
@@ -13,6 +14,7 @@ class RoleSerializer(serializers.ModelSerializer):
         role = Role.objects.create(**validated_data)
         role.permissions.set(permissions)
         return role
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     employee = serializers.PrimaryKeyRelatedField(queryset=Employee.objects.all(), required=False)
@@ -29,21 +31,14 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
-    """    
-    def create(self, validated_data):
-        # Create User instance
-        user = User.objects.create_user(**validated_data)
-        user.save()
-        # Create Employee instance
-        role = Role.objects.get(id=1)
-        employee = Employee.objects.create(user=user, role=role)
-        return employee
-    """
+    
 
 class ProfileModificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProfileModification
         fields = '__all__'  
+
+
 class EmployeeSerializer(serializers.ModelSerializer):
     company = serializers.PrimaryKeyRelatedField(queryset=Company.objects.all(), required=False)
     user = UserSerializer()
@@ -53,6 +48,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         fields = (
             'user',
             'role',
+            'company'
         )
 
     def create(self, validated_data):
@@ -67,7 +63,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
         return employee
 
 
-
 class ClientSerializer(serializers.ModelSerializer):
     user = UserSerializer()
 
@@ -75,4 +70,14 @@ class ClientSerializer(serializers.ModelSerializer):
         model = Client
         fields = (
             'user',
+        )
+
+
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = (
+            "company_name",
+            "clients",
+            "created_date",
         )

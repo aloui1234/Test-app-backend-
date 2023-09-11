@@ -7,11 +7,8 @@ from rest_framework.decorators import api_view, permission_classes
 from .serializers import ProfileSerializer  # Import your serializer
 
 from django.shortcuts import get_object_or_404, render
-from .models import Employee, ProfileModification,Profile
-from .serializers import EmployeeSerializer
-from .models import Employee, Client   # Import your Employee and Client models
-from .serializers import EmployeeSerializer, ClientSerializer, ProfileSerializer, UserSerializer  # Import your serializers
-from .models import User, Company, Profile
+from .models import Employee, ProfileModification, Profile, Client, User, Company
+from .serializers import EmployeeSerializer, ClientSerializer, ProfileSerializer, CompanySerializer  # Import your serializers
 from django.utils import timezone
 
 from rest_framework.decorators import api_view
@@ -24,50 +21,72 @@ def api_root(request):
         'message': 'Welcome to the API root!',
     })
 
+
 class GetEmployeeListView(APIView):
-    serializer_class = EmployeeSerializer
+    employee_serializer_class = EmployeeSerializer # helper class (employee) to generate text representation of the model
     permission_classes = (AllowAny,)
 
-    def get(self, request):
-        employees = Employee.objects.all()
-        serializer = self.serializer_class(employees, many=True)
-
-        response = {
-            'success': True,
-            'status_code': status.HTTP_200_OK,
-            'message': 'Successfully fetched employees',
-            'employees': serializer.data
-        }
-
-        return Response(response, status=status.HTTP_200_OK)    
+    def get(self, request, company):
+        """
+        Get list of employees by <company_name>
+        """
+        try:
+            company = Company.objects.get(company_name=company) # get companies with that name
+            employees = Employee.objects.filter(company=company) # get employees with company
+            employee_serializer = self.employee_serializer_class(employees, many=True) # convert the result to text representation
+          
+            response = {
+                'success': True,
+                'status_code': status.HTTP_200_OK,
+                'message': 'Successfully fetched employees',
+                'employees': employee_serializer.data # show data here
+            }
+            return Response(response, status=status.HTTP_200_OK)   
+        except Company.DoesNotExist:
+            return Response("Company not found", status= status.HTTP_404_NOT_FOUND) # if company is not found, show error 404
 
 
 class GetClientListView(APIView):
-    serializer_class = ClientSerializer
-    permission_classes = (AllowAny,)
+    client_serializer_class = ClientSerializer  # Helper class to generate text representation of the model
+    company_serializer_class = CompanySerializer 
+    permission_classes = (AllowAny,)  # Anyone can consume the API (no login/pass)
 
-    def get(self, request):
-        clients = Client.objects.all()
-        serializer = self.serializer_class(clients, many=True)
+    def get(self, request, company):
+        """
+        Get list of clients by <company_name>
+        """
+        try:
+            company = Company.objects.get(company_name=company) # get companies with that name
+            company_serializer = self.company_serializer_class(company) # convert company to text representation
 
-        response = {
-            'success': True,
-            'status_code': status.HTTP_200_OK,
-            'message': 'Successfully fetched clients',
-            'clients': serializer.data
-        }
+           
+            clients_ids = company_serializer.data['clients'] # get the ids of the clients [1,2,3,4...]
+            clients = Client.objects.filter(id__in=clients_ids) # get clients with these ids
+            clients_serializer = self.client_serializer_class(clients, many=True) # convert the result to text representation
+          
+            response = {
+                'success': True,
+                'status_code': status.HTTP_200_OK,
+                'message': f'Successfully fetched clients for {company}',
+                'clients': clients_serializer.data  # Show data in the JSON response
+            }
 
-        return Response(response, status=status.HTTP_200_OK)
+            return Response(response, status=status.HTTP_200_OK)
+        except Company.DoesNotExist:
+            return Response("Company not found", status=status.HTTP_404_NOT_FOUND)  # If company is not found, show error 404
 
 
 class GetEmployeeView(APIView):
-    serializer_class = EmployeeSerializer
-    permission_classes = (AllowAny,)
+    serializer_class = EmployeeSerializer # helper class to generate text representation of the model
+    permission_classes = (AllowAny,) # anyone can consume the api (no login/pass)
 
-    def get(self, request):
+    def get(self, request, id):
+        """
+        Get employee by <id>
+        """
         try:
-            employee = Employee.objects.get(user=request.user)
-            serializer = self.serializer_class(employee)
+            employee = Employee.objects.get(id=id) # get employees with that "id"
+            serializer = self.serializer_class(employee)  # convert to text representation
 
             response = {
                 'success': True,
@@ -78,18 +97,25 @@ class GetEmployeeView(APIView):
 
             return Response(response, status=status.HTTP_200_OK)
         except Employee.DoesNotExist:
-
-            return Response('User not found', status= status.HTTP_404_NOT_FOUND)
+            response = {
+                'success': False,
+                'status_code': status.HTTP_404_NOT_FOUND,
+                'message': 'Employee not found'
+            }
+            return Response(response, status= status.HTTP_404_NOT_FOUND)
 
        
 class GetClientView(APIView):
     serializer_class = ClientSerializer
     permission_classes = (AllowAny,)
 
-    def get(self, request):
+    def get(self, request, id):
+        """
+        Get client by <id>
+        """
         try:
-            client = request.user
-            serializer = self.serializer_class(client)
+            client = Client.objects.get(id=id) # get client with that "id"
+            serializer = self.serializer_class(client) # convert to text representation
 
             response = {
                 'success': True,
@@ -100,9 +126,14 @@ class GetClientView(APIView):
 
             return Response(response, status=status.HTTP_200_OK)
         except Client.DoesNotExist:
+            response = {
+                            'success': False,
+                            'status_code': status.HTTP_404_NOT_FOUND,
+                            'message': 'Client not found'
+            }
+            return Response(response, status= status.HTTP_404_NOT_FOUND)
+        
 
-            return Response('User not found', status= status.HTTP_404_NOT_FOUND)
-       
 class CreateEmployeeAPIView(APIView):
     employee_serializer_class = EmployeeSerializer
     profile_serializer_class = ProfileSerializer
@@ -165,6 +196,8 @@ class CreateEmployeeAPIView(APIView):
             return Response(response, status=status_code)
         return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         """
+
+
 class CreateClientAPIView(APIView):
     client_serializer_class = ClientSerializer
     permission_classes = (AllowAny,)
@@ -197,19 +230,42 @@ class CreateClientAPIView(APIView):
 class DeleteEmployeeAPIView(APIView):
     def delete(self, request, id):
         try:
+            # Delete the Employee object
             employee = Employee.objects.get(pk=id)
             employee.delete()
+
+            # Now update the User object with the same ID
+            try:
+                user = User.objects.get(pk=id)
+                user.is_deleted = True  # Set is_deleted to True
+                user.is_active = False  # Set is_active to False
+                user.save()
+            except User.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
             return Response(status=status.HTTP_204_NO_CONTENT)
         except Employee.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
+
 class DeleteClientAPIView(APIView):
     def delete(self, request, id):
         try:
-            client = Client.objects.get(pk=id)
+            # Delete the Client object
+            client = Employee.objects.get(pk=id)
             client.delete()
+
+            # Now update the User object with the same ID
+            try:
+                user = User.objects.get(pk=id)
+                user.is_deleted = True  # Set is_deleted to True
+                user.is_active = False  # Set is_active to False
+                user.save()
+            except User.DoesNotExist:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+
             return Response(status=status.HTTP_204_NO_CONTENT)
-        except Client.DoesNotExist:
+        except Employee.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         
@@ -217,7 +273,7 @@ class DeleteClientAPIView(APIView):
 #@permission_classes([IsAuthenticated])
 def EmployeeUpdateByHR(request, id):
     employee = get_object_or_404(Employee, id=id)
-    print(employee.user.first_name)
+
     if employee.role.role_name == "HR Manager" :
         modified_data = request.data
   #  modified_by = request.user
@@ -228,9 +284,9 @@ def EmployeeUpdateByHR(request, id):
             modified_date=timezone.now(),
             modified_data=modified_data
         )
-        for field_name, field_value in request.data.items():
-                if field_name == "job_title":  # Replace with the actual field name
-                    setattr(employee, "job_title", field_value) 
+        for field_name, field_value in modified_data.items():
+            if hasattr(employee, field_name):
+                setattr(employee, field_name, field_value)
 
         employee.save()
         employee.profilemodification.add(profile_modification)
@@ -238,6 +294,7 @@ def EmployeeUpdateByHR(request, id):
         serializer = EmployeeSerializer(employee, many=False)
         return Response(serializer.data)
     return Response({"message": "You cannot update this employee"}, status=status.HTTP_403_FORBIDDEN)
+
 
 @api_view(["PUT"])
 #@permission_classes([IsAuthenticated])
@@ -256,14 +313,15 @@ def ClientUpdateView(request, id):
             modified_date=timezone.now(),
             modified_data=modified_data
         )
-    for field_name, field_value in request.data.items():
-                if field_name == "id":  
-                    setattr(client, "id", field_value) 
+    for field_name, field_value in modified_data.items():
+            if hasattr(client, field_name):
+                setattr(client, field_name, field_value)
     client.save()
     client.profilemodification.add(profile_modification)
 
     serializer = ClientSerializer(client, many=False)
     return Response(serializer.data)
+
 
 @api_view(["GET", "PUT"])
 def EmployeeProfile(request, id):

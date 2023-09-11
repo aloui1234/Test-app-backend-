@@ -32,7 +32,8 @@ class Role(models.Model):
       if self.role_name:
           return self.role_name
       return super().__str__()
-    
+
+ 
 class User(AbstractBaseUser):
   user_id = models.UUIDField(unique=True, editable=False, default=uuid.uuid4, verbose_name='Public identifier')
   email = models.EmailField(unique=True)
@@ -66,44 +67,56 @@ class User(AbstractBaseUser):
   class Meta:
         verbose_name = 'user'
         verbose_name_plural = 'users'
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=100)
-    email = models.EmailField()
-    job_title = models.CharField(max_length=100)
-    # Add other fields as needed
 
-    def __str__(self):
-        return self.name
-   
-class Employee(models.Model):
-  """
-    User subtype with specific fields and properties
-    """
-  user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee')
-  role = models.ForeignKey(Role, on_delete=models.SET_NULL, related_name='user_role', null=True)
-  job_title = models.CharField(max_length=100, default='')
-  #Archive
-  profilemodification = models.ManyToManyField(ProfileModification, related_name='employeemodification',null=True)
+
+class ProfileModification(models.Model):
+  user = models.ForeignKey(
+    get_user_model(),
+    on_delete=models.CASCADE,
+    related_name='profile_modifications',
+    verbose_name='User'
+  )
+  modified_by = models.ForeignKey(
+    Role,
+    on_delete=models.SET_NULL,
+    null=True,
+    related_name='profile_modifications_created',
+    verbose_name='Modified By'
+  )
+  modified_date = models.DateTimeField(default=timezone.now, verbose_name='Modification Date',null=True)
+  modified_data = models.JSONField(default=dict, verbose_name='Modified Data',null=True)
+
+  class Meta:
+    verbose_name = 'profile modification'
+    verbose_name_plural = 'profile modifications'
+
 
 class Client(models.Model):
   """
     User subtype with specific fields and properties
     """
   user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='client')
-  company_name = models.CharField(max_length=100)  
-
-  profilemodification = models.ManyToManyField(ProfileModification, related_name='clientmodification',null=True)
-
+  
+  # New fields for additional client information
+  full_name = models.CharField(max_length=255)
+  address = models.CharField(max_length=255)
+  phone_number = models.CharField(max_length=20)
+  bank_name = models.CharField(max_length=255)
+  country = models.CharField(max_length=255)
+  iban = models.CharField(max_length=30)
+  swift_code = models.CharField(max_length=30)
+  
   class Meta:
         verbose_name = 'client'
         verbose_name_plural = 'clients'
+
 
 class App(models.Model):
   app_name = models.CharField(max_length=50, unique=True)
 
   def __str__(self):
       return self.app_name
+
 
 class Plan(models.Model):
   plan_name = models.CharField(max_length=50, unique=True)
@@ -114,16 +127,15 @@ class Plan(models.Model):
   def __str__(self):
     return self.plan_name
 
+
 class Company(models.Model):
   company_name = models.CharField(max_length=50, unique=True)
-  #owner = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='owner')
   plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name='owner')
-  #employees = models.ManyToManyField(Employee, related_name='employees')
   clients = models.ManyToManyField(Client, related_name='clients')
   created_date = models.DateTimeField(default=timezone.now)
 
-  def __str__(self):      return self.company_name
-
+  def __str__(self):      
+    return self.company_name
 
 
 class Employee(models.Model):
@@ -133,10 +145,8 @@ class Employee(models.Model):
   user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee')
   role = models.ForeignKey(Role, on_delete=models.SET_NULL, related_name='user_role', null=True)
   company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='company_profile')
+  profilemodification = models.ManyToManyField(ProfileModification, related_name='employeemodification',null=True)
 
-  class Meta:
-        verbose_name = 'employee'
-        verbose_name_plural = 'employees'
 
 class Profile(models.Model):
     first_name = models.CharField(max_length=30, blank=True)
@@ -173,27 +183,6 @@ class Profile(models.Model):
   
     def __str__(self):
       return self.job_title
-
-class ProfileModification(models.Model):
-        user = models.ForeignKey(
-          get_user_model(),
-          on_delete=models.CASCADE,
-          related_name='profile_modifications',
-          verbose_name='User'
-    )
-        modified_by = models.ForeignKey(
-          Role,
-        on_delete=models.SET_NULL,
-        null=True,
-        related_name='profile_modifications_created',
-        verbose_name='Modified By'
-    )
-        modified_date = models.DateTimeField(default=timezone.now, verbose_name='Modification Date',null=True)
-        modified_data = models.JSONField(default=dict, verbose_name='Modified Data',null=True)
-
-        class Meta:
-          verbose_name = 'profile modification'
-          verbose_name_plural = 'profile modifications'
 
 
 class Candidate(models.Model):

@@ -27,11 +27,21 @@ class RoleAdmin(admin.ModelAdmin):
         'role_name',
     )
 
+
 class ProfileAdmin(admin.ModelAdmin):
 
     list_display = (
         'job_title',
     )
+
+
+class ProfileModificationAdmin(admin.ModelAdmin):
+
+    list_display = (
+        'user',
+        'modified_by', 
+    )
+
 
 class UserAdmin(admin.ModelAdmin):
 
@@ -108,16 +118,12 @@ class CompanyAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'company_name',
-        #'owner',
         'plan',
         'created_date',
     )
     list_filter = (
-        #'owner',
         'company_name',
     )
-    #raw_id_fields = ('owner',)
-
 
 def register_models(admin_class_list):
     for model, admin_class in admin_class_list:
@@ -134,4 +140,5 @@ register_models([
     (models.App, AppAdmin),
     (models.Plan, PlanAdmin),
     (models.Company, CompanyAdmin),
+    (models.ProfileModification, ProfileModificationAdmin),
 ])
