@@ -70,7 +70,27 @@ class ClientSerializer(serializers.ModelSerializer):
         model = Client
         fields = (
             'user',
+            'full_name',
+            'address',
+            'phone_number',
+            'bank_name',
+            'country',
+            'iban',
+            'swift_code'
         )
+
+    def create(self, validated_data):
+        # Create User instance
+        user_instance = validated_data.pop('user')
+        user = User.objects.create_user(**user_instance)
+        user.save()
+        # Create Client instance
+        client = Client.objects.create(user=user, **validated_data)
+        # Add Client to Company instance
+        companyName = self.context.get('companyName')
+        company = Company.objects.get(company_name=companyName)
+        company.clients.add(client)
+        return client
 
 
 class CompanySerializer(serializers.ModelSerializer):
