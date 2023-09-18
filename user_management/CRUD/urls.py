@@ -9,9 +9,12 @@ urlpatterns = [
     path('get-employee/<int:id>/', views.GetEmployeeView.as_view(), name='get-employee'), # <id> is the id of employee
     path('get-client/<int:id>/', views.GetClientView.as_view(), name='get-client'), # <id> is the id of client
     
-    path('update-employee/<int:id>/', views.EmployeeUpdateByHR, name='employee-update'),
-    path('update-client/<int:id>/', views.ClientUpdateView, name='client-update'),
-    path('update-employee/<int:id>/profile/', views.EmployeeProfile, name='employee-profile-update'),
+    path('update-employee/<int:id>/', views.SimpleEmployeeUpdate, name='employee-update'),
+    path('update-client/<int:id>/', views.SimpleClientUpdate, name='client-update'),
+
+    #path('update-employee-hr/<int:id>/', views.EmployeeUpdateByHR, name='employee-hr-update'),
+    #path('update-client/<int:id>/', views.ClientUpdateView, name='client-update'),
+    #path('update-employee-profile/<int:id>', views.EmployeeProfile, name='employee-profile-update'),
     
     path('create-employee/<str:companyName>', views.CreateEmployeeAPIView.as_view(), name='create_employee'),
     path('delete-employee/<int:id>', views.DeleteEmployeeAPIView.as_view(), name='delete_employee'),

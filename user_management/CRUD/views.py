@@ -10,6 +10,8 @@ from django.shortcuts import get_object_or_404, render
 from .models import Employee, ProfileModification, Profile, Client, User, Company
 from .serializers import EmployeeSerializer, ClientSerializer, ProfileSerializer, CompanySerializer  # Import your serializers
 from django.utils import timezone
+import random
+import string
 
 from rest_framework.decorators import api_view
 from rest_framework.permissions import AllowAny
@@ -147,6 +149,10 @@ class CreateEmployeeAPIView(APIView):
         except Company.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
+        # Generate a random password
+        password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+        request.data['employee']['user']['password'] = password
+
         employee_serializer = self.employee_serializer_class(data=request.data['employee'], context={'companyName': companyName})
         profile_serializer = self.profile_serializer_class(data=request.data['employee']['profile'])
        
@@ -209,6 +215,10 @@ class CreateClientAPIView(APIView):
         except Company.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
+        # Generate a random password
+        password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
+        request.data['client']['user']['password'] = password
+
         client_serializer = self.client_serializer_class(data=request.data['client'], context={'companyName': companyName})
         client_valid = client_serializer.is_valid(raise_exception=True)
     
@@ -268,7 +278,38 @@ class DeleteClientAPIView(APIView):
         except Employee.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        
+
+@api_view(["PUT"])
+#@permission_classes([IsAuthenticated])
+def SimpleEmployeeUpdate(request, id):
+    employee = get_object_or_404(Employee, id=id)
+    profile = get_object_or_404(Profile, employee=employee)
+    
+    for field_name, field_value in request.data.items():
+        if hasattr(profile, field_name):
+            setattr(profile, field_name, field_value)
+
+    profile.save()
+
+    serializer = ProfileSerializer(profile, many=False)
+    return Response(serializer.data)
+
+
+@api_view(["PUT"])
+#@permission_classes([IsAuthenticated])
+def SimpleClientUpdate(request, id):
+    client = get_object_or_404(Client, id=id)
+    
+    for field_name, field_value in request.data.items():
+        if hasattr(client, field_name):
+            setattr(client, field_name, field_value)
+
+    client.save()
+
+    serializer = ClientSerializer(client, many=False)
+    return Response(serializer.data)
+
+
 @api_view(["PUT"])
 #@permission_classes([IsAuthenticated])
 def EmployeeUpdateByHR(request, id):

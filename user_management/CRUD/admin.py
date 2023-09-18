@@ -31,9 +31,9 @@ class RoleAdmin(admin.ModelAdmin):
 class ProfileAdmin(admin.ModelAdmin):
 
     list_display = (
+        'employee',
         'job_title',
     )
-
 
 class ProfileModificationAdmin(admin.ModelAdmin):
 

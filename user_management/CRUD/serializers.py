@@ -46,6 +46,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = (
+            'id',
             'user',
             'role',
             'company'
@@ -69,6 +70,7 @@ class ClientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Client
         fields = (
+            'id',
             'user',
             'full_name',
             'address',
