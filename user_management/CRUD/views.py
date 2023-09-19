@@ -37,6 +37,7 @@ class GetEmployeeListView(APIView):
             data=[]
             company = Company.objects.get(company_name=company)
             employees = Employee.objects.filter(company=company)
+            
             for employee in employees:
                 profile = Profile.objects.get(employee=employee)
                 employee_serializer = self.employee_serializer_class(employee)
