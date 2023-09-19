@@ -26,6 +26,7 @@ def api_root(request):
 
 class GetEmployeeListView(APIView):
     employee_serializer_class = EmployeeSerializer # helper class (employee) to generate text representation of the model
+    profile_serializer_class = ProfileSerializer
     permission_classes = (AllowAny,)
 
     def get(self, request, company):
@@ -33,15 +34,20 @@ class GetEmployeeListView(APIView):
         Get list of employees by <company_name>
         """
         try:
-            company = Company.objects.get(company_name=company) # get companies with that name
-            employees = Employee.objects.filter(company=company) # get employees with company
-            employee_serializer = self.employee_serializer_class(employees, many=True) # convert the result to text representation
+            data=[]
+            company = Company.objects.get(company_name=company)
+            employees = Employee.objects.filter(company=company)
+            for employee in employees:
+                profile = Profile.objects.get(employee=employee)
+                employee_serializer = self.employee_serializer_class(employee)
+                profile_serializer = self.profile_serializer_class(profile)
+                data.append({**employee_serializer.data, **profile_serializer.data}) 
           
             response = {
                 'success': True,
                 'status_code': status.HTTP_200_OK,
                 'message': 'Successfully fetched employees',
-                'employees': employee_serializer.data # show data here
+                'employees': data # show data here
             }
             return Response(response, status=status.HTTP_200_OK)   
         except Company.DoesNotExist:
@@ -79,7 +85,8 @@ class GetClientListView(APIView):
 
 
 class GetEmployeeView(APIView):
-    serializer_class = EmployeeSerializer # helper class to generate text representation of the model
+    employee_serializer_class = EmployeeSerializer
+    profile_serializer_class = ProfileSerializer
     permission_classes = (AllowAny,) # anyone can consume the api (no login/pass)
 
     def get(self, request, id):
@@ -88,13 +95,18 @@ class GetEmployeeView(APIView):
         """
         try:
             employee = Employee.objects.get(id=id) # get employees with that "id"
-            serializer = self.serializer_class(employee)  # convert to text representation
+            profile = Profile.objects.get(employee=employee)
+            
+            employee_serializer = self.employee_serializer_class(employee)  # convert to text representation
+            profile_serializer = self.profile_serializer_class(profile)
+            
+            data = {**employee_serializer.data, **profile_serializer.data}
 
             response = {
                 'success': True,
                 'status_code': status.HTTP_200_OK,
                 'message': 'Successfully fetched employee',
-                'employee': serializer.data
+                'employee': data
             }
 
             return Response(response, status=status.HTTP_200_OK)
