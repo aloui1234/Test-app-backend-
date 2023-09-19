@@ -143,7 +143,7 @@ class Employee(models.Model):
     User subtype with specific fields and properties
     """
   user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='employee')
-  role = models.ForeignKey(Role, on_delete=models.SET_NULL, related_name='user_role', null=True)
+  role = models.ForeignKey(Role, on_delete=models.SET_NULL, related_name='user_role', null=True,default=1)
   company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='company_profile')
   profilemodification = models.ManyToManyField(ProfileModification, related_name='employeemodification',null=True)
 
@@ -154,7 +154,7 @@ class Profile(models.Model):
     job_title = models.CharField(max_length=100, default='')
     date_of_birth = models.DateTimeField(default=timezone.now)
     phone_number = models.CharField(max_length=20, blank=True)
-    avatar = models.CharField(max_length=50, unique=True)
+    avatar = models.CharField(max_length=50, unique=False ,blank=True)
     country = models.CharField(max_length=100, default='')
     language = models.CharField(max_length=100, default='')
     skype = models.CharField(max_length=100, default='')

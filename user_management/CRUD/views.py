@@ -262,7 +262,7 @@ class DeleteClientAPIView(APIView):
     def delete(self, request, id):
         try:
             # Delete the Client object
-            client = Employee.objects.get(pk=id)
+            client = Client.objects.get(pk=id)
             client.delete()
 
             # Now update the User object with the same ID
